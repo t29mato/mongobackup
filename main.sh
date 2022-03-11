@@ -31,14 +31,14 @@ fi
 function preprocess() {
     # remove old dump file
     rm -rf $DUMP_DIR
-    return 1
+    return 0
 }
 
 function main_mongodump() {
     # dump database data
     echo $DB_HOST
     mongodump --host $DB_HOST --port $DB_PORT --out $DUMP_DIR --db $DB_NAME
-    return 1
+    return 0
 }
 
 function main_mongodumperror() {
@@ -49,13 +49,13 @@ function main_mongodumperror() {
 function compress() {
     # compress dump file
     tar vczPf $BACKUP_FILE $DUMP_DIR
-    return 1
+    return 0
 }
 
 function afterprocess() {
     # remove old files
-    find $BACKUP_DIR -type f -mtime + 30 | xargs rm -f
-    return 1
+    find $BACKUP_DIR -type f -mtime +30 | xargs rm -f
+    return 0
 }
 
 echo 'preprocess'
