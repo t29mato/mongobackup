@@ -77,7 +77,6 @@ function afterprocess() {
 }
 
 function complete() {
-    BACKUP_FILE=./main.sh
     echo $BACKUP_FILE >> ./body.txt
     echo $(ls -lah $BACKUP_FILE) >> ./body.txt
     sed -e "s/<FROM>/$MAIL_FROM/" -e "s/<TO>/$MAIL_TO/" -e "s/<CC>/$MAIL_CC/" ./templates/success.txt | cat - ./body.txt | sendmail -i -t
