@@ -54,7 +54,6 @@ function preprocess() {
 
 function main_mongodump() {
     # dump database data
-    echo $DB_HOST
     mongodump --host $DB_HOST --port $DB_PORT --out $DUMP_DIR --db $DB_NAME
     return 0
 }
@@ -77,10 +76,9 @@ function afterprocess() {
 }
 
 function complete() {
-    echo $BACKUP_FILE >> ./body.txt
-    echo $(ls -lah $BACKUP_FILE) >> ./body.txt
-    sed -e "s/<FROM>/$MAIL_FROM/" -e "s/<TO>/$MAIL_TO/" -e "s/<CC>/$MAIL_CC/" ./templates/success.txt | cat - ./body.txt | sendmail -i -t
-    echo 'sent a mail'
+    FILE_SIZE=$(ls -lah ./main.sh| awk '{print $5}')
+    echo $(pwd $BACKUP_FILE) >> ./body.txt
+    sed -e "s/<FROM>/$MAIL_FROM/" -e "s/<TO>/$MAIL_TO/" -e "s/<CC>/$MAIL_CC/" -e "s/<FILE_SIZE>/$FILE_SIZE/" ./templates/success.txt | cat - ./body.txt | sendmail -i -t
     rm -f ./body.txt
     return 0
 }
