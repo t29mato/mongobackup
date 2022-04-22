@@ -10,6 +10,7 @@ MAIL_CC=$7
 BACKUP_DIR=$BACKUP_BASE_DIR/backup/$DB_NAME/
 DUMP_DIR=$BACKUP_DIR/dump
 BACKUP_FILE=$BACKUP_DIR/$DB_NAME_`date +"%Y%m%d-%H%M%S"`.tar
+SUCCESS_MAIL_TEMPLATE_FILE=$BACKUP_BASE_DIR/templates/success.txt
 
 if [ -z $DB_HOST ]; then
     echo 'require database host'
@@ -78,7 +79,7 @@ function afterprocess() {
 function complete() {
     FILE_SIZE=$(ls -lah ./main.sh| awk '{print $5}')
     echo $(pwd $BACKUP_FILE) >> ./body.txt
-    sed -e "s/<FROM>/$MAIL_FROM/" -e "s/<TO>/$MAIL_TO/" -e "s/<CC>/$MAIL_CC/" -e "s/<FILE_SIZE>/$FILE_SIZE/" ./templates/success.txt | cat - ./body.txt | sendmail -i -t
+    sed -e "s/<FROM>/$MAIL_FROM/" -e "s/<TO>/$MAIL_TO/" -e "s/<CC>/$MAIL_CC/" -e "s/<FILE_SIZE>/$FILE_SIZE/" $SUCCESS_MAIL_TEMPLATE_FILE | cat - ./body.txt | sendmail -i -t
     rm -f ./body.txt
     return 0
 }

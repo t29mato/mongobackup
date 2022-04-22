@@ -1,4 +1,4 @@
 From: <FROM>
 To: <TO>
 Cc: <CC>
-Subject: Starrydata database backup succeeded.
+Subject: Today's Starrydata database backup file was <FILE_SIZE>.
