@@ -79,7 +79,7 @@ function afterprocess() {
 function complete() {
     FILE_SIZE=$(ls -lah $BACKUP_FILE | awk '{print $5}')
     echo $BACKUP_FILE >> ./body.txt
-    sed -e "s/<FROM>/$MAIL_FROM/" -e "s/<TO>/$MAIL_TO/" -e "s/<CC>/$MAIL_CC/" -e "s/<FILE_SIZE>/$FILE_SIZE/" $SUCCESS_MAIL_TEMPLATE_FILE | cat - ./body.txt | sendmail -i -t
+    sed -e "s/<FROM>/$MAIL_FROM/" -e "s/<TO>/$MAIL_TO/" -e "s/<CC>/$MAIL_CC/" -e "s/<FILE_SIZE>/$FILE_SIZE/" $SUCCESS_MAIL_TEMPLATE_FILE | cat - ./body.txt | /usr/sbin/sendmail -i -t
     rm -f ./body.txt
     return 0
 }
