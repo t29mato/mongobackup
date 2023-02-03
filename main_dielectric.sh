@@ -111,7 +111,7 @@ function afterprocess() {
 function complete() {
     FILE_SIZE=$(ls -lah $BACKUP_FILE | awk '{print $5}')
     echo $BACKUP_FILE >> ./body.txt
-    message="file size: $FILE_SIZE, file path: $(pwd)/$BACKUP_FILE"
+    message="file size: $FILE_SIZE, file path: $BACKUP_FILE"
     curl -X POST -H 'Content-type: application/json' --data "{\"text\":\"${message}\"}" $SLACK_WEBHOOK_URL
     return 0
 }
