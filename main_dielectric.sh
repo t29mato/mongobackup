@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # 引数を受け取る
-while getopts hpdbfct-: opt; do
+while getopts hpdbs-: opt; do
     # OPTIND 番目の引数を optarg へ代入
     optarg="${!OPTIND}"
     [[ "$opt" = - ]] && opt="-$OPTARG"
@@ -22,16 +22,8 @@ while getopts hpdbfct-: opt; do
             backup_base_dir="$optarg"
             shift
             ;;
-        -f|--from)
-            from="$optarg"
-            shift
-            ;;
-        -c|--cc)
-            cc="$optarg"
-            shift
-            ;;
-        -t|--to)
-            to="$optarg"
+        -s|--slack-webhook-url)
+            slack_webhook_url="$optarg"
             shift
             ;;
         --)
@@ -65,16 +57,8 @@ if [ -z $backup_base_dir ]; then
     echo 'require backup base directory'
     exit
 fi
-if [ -z $from ]; then
-    echo 'require mail from'
-    exit
-fi
-if [ -z $to ]; then
-    echo 'require mail to'
-    exit
-fi
-if [ -z $cc ]; then
-    echo 'require mail cc'
+if [ -z slack_webhook_url ]; then
+    echo 'require slack webhook url'
     exit
 fi
 
@@ -83,9 +67,7 @@ DB_HOST=$host
 DB_PORT=$port
 DB_NAME=$database
 BACKUP_BASE_DIR=$backup_base_dir
-MAIL_FROM=$from
-MAIL_TO=$to
-MAIL_CC=$cc
+SLACK_WEBHOOK_URL=$slack_webhook_url
 BACKUP_DIR=$BACKUP_BASE_DIR/backup/dielectric
 DUMP_DIR=$BACKUP_DIR/dump
 BACKUP_FILE=$BACKUP_DIR/$DB_NAME_`date +"%Y%m%d-%H%M%S"`.tar
@@ -129,8 +111,8 @@ function afterprocess() {
 function complete() {
     FILE_SIZE=$(ls -lah $BACKUP_FILE | awk '{print $5}')
     echo $BACKUP_FILE >> ./body.txt
-    sed -e "s/<FROM>/$MAIL_FROM/" -e "s/<TO>/$MAIL_TO/" -e "s/<CC>/$MAIL_CC/" -e "s/<FILE_SIZE>/$FILE_SIZE/" $SUCCESS_MAIL_TEMPLATE_FILE | cat - ./body.txt | /usr/sbin/sendmail -i -t
-    rm -f ./body.txt
+    message="file size: $FILE_SIZE, file path: $(pwd)/$BACKUP_FILE"
+    curl -X POST -H 'Content-type: application/json' --data "{\"text\":\"${message}\"}" $SLACK_WEBHOOK_URL
     return 0
 }
 
