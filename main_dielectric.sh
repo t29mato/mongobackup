@@ -1,6 +1,7 @@
 #!/bin/bash
 
-while getopts hmsv-: opt; do
+# 引数を受け取る
+while getopts hpdbfct-: opt; do
     # OPTIND 番目の引数を optarg へ代入
     optarg="${!OPTIND}"
     [[ "$opt" = - ]] && opt="-$OPTARG"
@@ -22,17 +23,17 @@ while getopts hmsv-: opt; do
             shift
             ;;
         -f|--from)
-          from="$optarg"
+            from="$optarg"
             shift
             ;;
         -c|--cc)
-          cc="$optarg"
-          shift
-          ;;
+            cc="$optarg"
+            shift
+            ;;
         -t|--to)
-          to="$optarg"
-          shift
-          ;;
+            to="$optarg"
+            shift
+            ;;
         --)
             break
             ;;
@@ -47,6 +48,37 @@ while getopts hmsv-: opt; do
 done
 shift $((OPTIND - 1))
 
+# 必須引数が指定されているか確認
+if [ -z $host ]; then
+    echo 'require database host'
+    exit
+fi
+if [ -z $port ]; then
+    echo 'require database port'
+    exit
+fi
+if [ -z $database ]; then
+    echo 'require database name'
+    exit
+fi
+if [ -z $backup_base_dir ]; then
+    echo 'require backup base directory'
+    exit
+fi
+if [ -z $from ]; then
+    echo 'require mail from'
+    exit
+fi
+if [ -z $to ]; then
+    echo 'require mail to'
+    exit
+fi
+if [ -z $cc ]; then
+    echo 'require mail cc'
+    exit
+fi
+
+# 変数を定義
 DB_HOST=$host
 DB_PORT=$port
 DB_NAME=$database
@@ -59,70 +91,41 @@ DUMP_DIR=$BACKUP_DIR/dump
 BACKUP_FILE=$BACKUP_DIR/$DB_NAME_`date +"%Y%m%d-%H%M%S"`.tar
 SUCCESS_MAIL_TEMPLATE_FILE=$BACKUP_BASE_DIR/mongobackup/templates/success.txt
 
-if [ -z $DB_HOST ]; then
-    echo 'require database host'
-    exit
-fi
-
-if [ -z $DB_PORT ]; then
-    echo 'require database port'
-    exit
-fi
-
-if [ -z $DB_NAME ]; then
-    echo 'require database name'
-    exit
-fi
-
-if [ -z $BACKUP_BASE_DIR ]; then
-    echo 'require backup base directory'
-    exit
-fi
-
-if [ -z $MAIL_FROM ]; then
-    echo 'require mail from'
-    exit
-fi
-
-if [ -z $MAIL_TO ]; then
-    echo 'require mail to'
-    exit
-fi
-
-if [ -z $MAIL_CC ]; then
-    echo 'require mail cc'
-    exit
-fi
-
+# 前処理
 function preprocess() {
-    # remove old dump file
+    # 古いダンプファイルを削除
     rm -rf $DUMP_DIR
     return 0
 }
 
+# メイン処理（MongoDBのダンプ）
 function main_mongodump() {
-    # dump database data
+    # データベースのデータをダンプ
     mongodump --host $DB_HOST --port $DB_PORT --out $DUMP_DIR --db $DB_NAME
     return 0
 }
 
+# メイン処理（MongoDBのダンプ失敗時）
 function main_mongodumperror() {
     echo 'failed to dump database'
     exit 1
 }
 
+# 圧縮処理
 function compress() {
-    # compress dump file
+    # ダンプファイルを圧縮
     tar vczPf $BACKUP_FILE $DUMP_DIR
     return 0
 }
 
+# 後処理
 function afterprocess() {
-    # remove old files
+    # 古いファイルを削除
     find $BACKUP_DIR -type f -mtime +30 | xargs rm -f
     return 0
 }
 
+# 完了処理
 function complete() {
     FILE_SIZE=$(ls -lah $BACKUP_FILE | awk '{print $5}')
     echo $BACKUP_FILE >> ./body.txt
