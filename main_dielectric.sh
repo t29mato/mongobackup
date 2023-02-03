@@ -1,12 +1,59 @@
 #!/bin/bash
 
-DB_HOST=$1
-DB_PORT=$2
-DB_NAME=$3
-BACKUP_BASE_DIR=$4
-MAIL_FROM=$5
-MAIL_TO=$6
-MAIL_CC=$7
+while getopts hmsv-: opt; do
+    # OPTIND 番目の引数を optarg へ代入
+    optarg="${!OPTIND}"
+    [[ "$opt" = - ]] && opt="-$OPTARG"
+    case "-$opt" in
+        -h|--host)
+            host="$optarg"
+            shift
+            ;;
+        -p|--port)
+            port="$optarg"
+            shift
+            ;;
+        -d|--database)
+            database="$optarg"
+            shift
+            ;;
+        -b|--backup-base-dir)
+            backup_base_dir="$optarg"
+            shift
+            ;;
+        -f|--from)
+          from="$optarg"
+            shift
+            ;;
+        -c|--cc)
+          cc="$optarg"
+          shift
+          ;;
+        -t|--to)
+          to="$optarg"
+          shift
+          ;;
+        --)
+            break
+            ;;
+        -\?)
+            exit 1
+            ;;
+        --*)
+            echo "$0: illegal option -- ${opt##-}" >&2
+            exit 1
+            ;;
+    esac
+done
+shift $((OPTIND - 1))
+
+DB_HOST=$host
+DB_PORT=$port
+DB_NAME=$database
+BACKUP_BASE_DIR=$backup_base_dir
+MAIL_FROM=$from
+MAIL_TO=$to
+MAIL_CC=$cc
 BACKUP_DIR=$BACKUP_BASE_DIR/backup/dielectric
 DUMP_DIR=$BACKUP_DIR/dump
 BACKUP_FILE=$BACKUP_DIR/$DB_NAME_`date +"%Y%m%d-%H%M%S"`.tar
