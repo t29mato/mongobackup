@@ -58,31 +58,25 @@ if [ -z $backup_dir ]; then
     exit
 fi
 
-# 変数を定義
-DB_HOST=$host
-DB_PORT=$port
-DB_NAME=$database
-SLACK_WEBHOOK_URL=$slack_webhook_url
-BACKUP_DIR=$backup_dir
-DUMP_DIR=$BACKUP_DIR/dump
-BACKUP_FILE=$BACKUP_DIR/$DB_NAME_`date +"%Y%m%d-%H%M%S"`.tar
+dump_dir=$backup_dir/dump
+zip_file=$backup_dir/$DB_NAME_`date +"%Y%m%d-%H%M%S"`.tar
 
 # 前処理
 function preprocess() {
     # 古いダンプファイルを削除
-    rm -rf $DUMP_DIR
+    rm -rf $dump_dir
     return 0
 }
 
 # メイン処理（MongoDBのダンプ）
 function main_mongodump() {
     # データベースのデータをダンプ
-    mongodump --host $DB_HOST --port $DB_PORT --out $DUMP_DIR --db $DB_NAME
+    mongodump --host $host --port $port --out $dump_dir --db $database
     return 0
 }
 
 # メイン処理（MongoDBのダンプ失敗時）
-function main_mongodumperror() {
+function main_mongo_dump_error() {
     echo 'failed to dump database'
     exit 1
 }
@@ -90,22 +84,22 @@ function main_mongodumperror() {
 # 圧縮処理
 function compress() {
     # ダンプファイルを圧縮
-    tar vczPf $BACKUP_FILE $DUMP_DIR
+    tar vczPf $zip_file $dump_dir
     return 0
 }
 
 # 後処理
-function afterprocess() {
+function after_process() {
     # 古いファイルを削除
-    find $BACKUP_DIR -type f -mtime +30 | xargs rm -f
+    find $backup_dir -type f -mtime +30 | xargs rm -f
     return 0
 }
 
 # 完了処理
 function complete() {
-    if [ $SLACK_WEBHOOK_URL ]; then
-        FILE_SIZE=$(ls -lah $BACKUP_FILE | awk '{print $5}')
-        message="The backup was successful. File size: $FILE_SIZE, File path: $BACKUP_FILE"
+    if [ $slack_webhook_url ]; then
+        FILE_SIZE=$(ls -lah $zip_file | awk '{print $5}')
+        message="The backup was successful. File size: $FILE_SIZE, File path: $zip_file"
         curl -X POST -H 'Content-type: application/json' --data "{\"text\":\"${message}\"}"
     fi
     return 0
@@ -113,11 +107,11 @@ function complete() {
 
 echo 'preprocess'
 preprocess
-echo 'main_mongodump'
-main_mongodump || main_mongodumperror
+echo 'main mongodump'
+main_mongodump || main_mongo_dump_error
 echo 'compress'
 compress
-echo 'afterprocess'
-afterprocess
+echo 'after process'
+after_process
 complete
 echo 'complete'
