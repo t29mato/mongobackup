@@ -100,7 +100,7 @@ function complete() {
     if [ $slack_webhook_url ]; then
         FILE_SIZE=$(ls -lah $zip_file | awk '{print $5}')
         message="The backup was successful. File size: $FILE_SIZE, File path: $zip_file"
-        curl -X POST -H 'Content-type: application/json' --data "{\"text\":\"${message}\"}"
+        curl -X POST -H 'Content-type: application/json' --data "{\"text\":\"${message}\"}" $slack_webhook_url
     fi
     return 0
 }
