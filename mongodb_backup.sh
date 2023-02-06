@@ -18,8 +18,8 @@ while getopts hpdbs-: opt; do
             database="$optarg"
             shift
             ;;
-        -b|--backup-base-dir)
-            backup_base_dir="$optarg"
+        -b|--backup-dir)
+            backup_dir="$optarg"
             shift
             ;;
         -s|--slack-webhook-url)
@@ -53,12 +53,8 @@ if [ -z $database ]; then
     echo 'require database name'
     exit
 fi
-if [ -z $backup_base_dir ]; then
-    echo 'require backup base directory'
-    exit
-fi
-if [ -z slack_webhook_url ]; then
-    echo 'require slack webhook url'
+if [ -z $backup_dir ]; then
+    echo 'require backup directory'
     exit
 fi
 
@@ -66,12 +62,10 @@ fi
 DB_HOST=$host
 DB_PORT=$port
 DB_NAME=$database
-BACKUP_BASE_DIR=$backup_base_dir
 SLACK_WEBHOOK_URL=$slack_webhook_url
-BACKUP_DIR=$BACKUP_BASE_DIR/backup/dielectric
+BACKUP_DIR=$backup_dir
 DUMP_DIR=$BACKUP_DIR/dump
 BACKUP_FILE=$BACKUP_DIR/$DB_NAME_`date +"%Y%m%d-%H%M%S"`.tar
-SUCCESS_MAIL_TEMPLATE_FILE=$BACKUP_BASE_DIR/mongobackup/templates/success.txt
 
 # 前処理
 function preprocess() {
@@ -109,10 +103,11 @@ function afterprocess() {
 
 # 完了処理
 function complete() {
-    FILE_SIZE=$(ls -lah $BACKUP_FILE | awk '{print $5}')
-    echo $BACKUP_FILE >> ./body.txt
-    message="file size: $FILE_SIZE, file path: $BACKUP_FILE"
-    curl -X POST -H 'Content-type: application/json' --data "{\"text\":\"${message}\"}" $SLACK_WEBHOOK_URL
+    if [ $SLACK_WEBHOOK_URL ]; then
+        FILE_SIZE=$(ls -lah $BACKUP_FILE | awk '{print $5}')
+        message="The backup was successful. File size: $FILE_SIZE, File path: $BACKUP_FILE"
+        curl -X POST -H 'Content-type: application/json' --data "{\"text\":\"${message}\"}"
+    fi
     return 0
 }
 
